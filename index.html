@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang='ru'>
+<head>
+  <meta charset='utf-8'>
+  <title>Additions Selector Demo</title>
+
+<style type='text/css'>
+  html, body,
+  .content {
+    margin:  0;
+    padding: 0;
+    background-color: white;
+  }
+
+  .proto-form {
+    margin: 40px auto;
+    width: 800px;
+    background-color: #F5F4F2;
+  }
+
+  .proto-form__content {
+    margin: 40px 124px;
+    padding: 40px 0;
+  }
+
+  .proto-options-header {
+    margin-bottom: 4px;
+    padding: 0 6px;
+    color: #9B9B9B;
+    font: 14px/16px 'Helvetica Neue', sans-serif;
+  }
+
+  .proto-option {
+    /* Reset */
+    appearance: none;
+    -moz-appearance: none;
+    -webkit-appearance: none;
+    border: none;
+    /* New style */
+    margin: 6px;
+    padding: 14px 20px;
+    width: 172px;
+    background: #FFFFFF;
+    border-radius: 2px;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05), 0 1px 2px 0 rgba(0, 0, 0, 0.1);
+    color: #696969;
+    font: 18px/22px 'Helvetica Neue', sans-serif;
+  }
+
+  .proto-option--selected {
+    color: #00D89A;
+    box-shadow: inset 0 0 0 3px rgba(0, 216, 154, 0.7),
+                0 0 0 1px rgba(0, 179, 127, 0.45),
+                0 1px 4px 0 rgba(0, 216, 154, 0.45);
+  }
+
+  .proto-option:active { background-color: #F9F8F7;}
+</style>
+</head>
+<body>
+  <div class='content'>
+    <form class='proto-form'>
+      <div class='proto-form__content'>
+        <p>Something went wrong :(</p>
+      </div>
+    </form>
+  </div>
+
+<script>
+  'use strict';
+
+  var nodeClassName = '.proto-form__content';
+  var node = document.querySelectorAll(nodeClassName)[0];
+  var names = ['Фрукты', 'Овощи', 'Молочное', 'Мясное', 'Десерты'];
+  var defaultHeader = 'Выберите чем себя побаловать';
+
+  var view = (function() {
+    function getHeader(str) {
+      return '<div class="proto-options-header">' + str + '</div>';
+    }
+
+    function getSelectorOption(option) {
+      var optionClass = option.selected ? 'proto-option proto-option--selected' : 'proto-option'
+
+      return '<button ' +
+             'id="' + option.id + '" ' +
+             'class="' + optionClass + '" ' +
+             'onclick="app.update(this)"' +
+             'value ="' + option.name + '" ' +
+             '>' + option.name + '</button>';
+    }
+
+    function render(model, node) {
+      var header = getHeader(model.header);
+      var selectorOptions = model.options.map(getSelectorOption).join('');
+      node.innerHTML = header + selectorOptions;
+    }
+
+    return { render : render };
+  })();
+
+  var app = (function() {
+    var model = {
+      header: defaultHeader,
+      options: []
+    };
+
+    function updateHeader(model) {
+      var tempHeader = '';
+
+      names.forEach(function(name) {
+        var selectedWithName = model.options.filter(function(option) {
+          return option.selected && option.name === name;
+        });
+
+        if (selectedWithName.length > 0) {
+          if (tempHeader) {
+            tempHeader += ', '
+          }
+
+          tempHeader += name.toLowerCase() + ' × ' + selectedWithName.length;
+        }
+      });
+
+      return tempHeader ? 'Итого: ' + tempHeader : defaultHeader;
+    }
+
+    function updateOptions(options) {
+      for (var i = 0; i < names.length; i++) {
+        var name = names[i];
+
+        var optionsUnselected = options.map(function(option, index) {
+          return { option: option, index: index };
+        }).filter(function(optionStruct) {
+          return optionStruct.option.name === name;
+        }).filter(function(optionStruct) {
+          return !optionStruct.option.selected;
+        });
+
+        if (optionsUnselected.length === 0) {
+          options.push(generateOption(name));
+          return options;
+        } else if (optionsUnselected.length === 2) {
+          var indexesUnselected = optionsUnselected.map(function(optionStruct) {
+            return optionStruct.index;
+          });
+
+          options.splice(Math.max.apply(Math, indexesUnselected), 1);
+
+          return options;
+        }
+      }
+
+      return options;
+    }
+
+    function toggleSelectedForElem(elem, options) {
+      return options.map(function(option) {
+        if (option.id === elem.id) {
+          option.selected = !option.selected;
+          return option;
+        }
+        return option;
+      });
+    }
+
+    function update(elem) {
+      model.options = updateOptions(toggleSelectedForElem(elem, model.options));
+      model.header = updateHeader(model);
+      view.render(model, node);
+    }
+
+    // https://gist.github.com/gordonbrander/2230317
+    function id() {
+      return '_' + Math.random().toString(36).substr(2, 9);
+    };
+
+    function generateOption(name) {
+      return { id: id(), name: name, selected: false };
+    }
+
+    function init(names, node) {
+      model.options = names.map(generateOption);
+      view.render(model, node);
+    }
+
+    return {
+      init   : init,
+      update : update
+    };
+  })();
+
+  window.onload = function() { app.init(names, node); }
+</script>
+</body>
+</html>
