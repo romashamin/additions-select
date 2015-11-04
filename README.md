@@ -1,5 +1,5 @@
-Additions select demo
+# Additions Select Demo
 
-Allows to click out any number of options.
+Allows to [click out] any number of options.
 
-See the live [demo](http://romashamin.github.io/additions-select/).
+[click out]:http://romashamin.github.io/additions-select/
